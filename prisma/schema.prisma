@@ -1,79 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
-  phone       String    @unique
-  password    String
-  orders      Order[]
-  warranties  Warranty[]
-  createdAt   DateTime  @default(now())
+  id         Int        @id @default(autoincrement())
+  name       String
+  email      String     @unique
+  phone      String     @unique
+  password   String
+  orders     Order[]
+  warranties Warranty[]
+  reviews    Review[] // ✅ Added back-relation
+  createdAt  DateTime   @default(now())
 }
 
 model Category {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
-  products  Product[]
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
 }
 
 model Product {
-  id          Int        @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   name        String
   description String
-  price       Int         // stored in Toman for consistency
+  price       Int // stored in Toman for consistency
   image       String
   stock       Int
   categoryId  Int
-  category    Category    @relation(fields: [categoryId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
   filters     ProductFilter[]
   reviews     Review[]
-  createdAt   DateTime    @default(now())
+  warranties  Warranty[] // ✅ Added back-relation
+  createdAt   DateTime        @default(now())
 }
 
 model ProductFilter {
-  id          Int      @id @default(autoincrement())
-  productId   Int
-  product     Product  @relation(fields: [productId], references: [id])
-  size        String?   // e.g., Single, Double, King
-  firmness    String?   // e.g., Soft, Medium, Firm
-  material    String?   // e.g., Memory Foam, Latex
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  size      String? // e.g., Single, Double, King
+  firmness  String? // e.g., Soft, Medium, Firm
+  material  String? // e.g., Memory Foam, Latex
 }
 
 model Order {
-  id         Int      @id @default(autoincrement())
-  userId     Int?
-  user       User?    @relation(fields: [userId], references: [id])
-  items      Json
-  total      Int
-  status     String    @default("pending")
-  createdAt  DateTime  @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  items     Json
+  total     Int
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
 }
 
 model Warranty {
-  id         Int      @id @default(autoincrement())
-  productId  Int
-  product    Product  @relation(fields: [productId], references: [id])
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id])
-  serialCode String   @unique
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id])
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  serialCode  String   @unique
   activatedAt DateTime @default(now())
 }
 
 model Review {
-  id         Int      @id @default(autoincrement())
-  productId  Int
-  product    Product  @relation(fields: [productId], references: [id])
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id])
-  rating     Int      // 1-5 stars
-  comment    String?
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int // 1-5 stars
+  comment   String?
+  createdAt DateTime @default(now())
 }
