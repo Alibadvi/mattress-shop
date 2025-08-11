@@ -1,45 +1,38 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-// GET: Product details by ID
-export async function GET(
+export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const product = await prisma.product.findUnique({
-    where: { id: Number(params.id) },
-    include: { category: true, filters: true, reviews: true },
+  const { id } = await params;
+  const body = await req.json();
+
+  const data = {
+    name: String(body.name ?? "").trim(),
+    description: String(body.description ?? "").trim(),
+    price: Number(body.price),
+    stock: Number(body.stock),
+    categoryId: Number(body.categoryId),
+  };
+
+  if (!data.name || !data.price || !data.categoryId) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const updated = await prisma.product.update({
+    where: { id: Number(id) },
+    data,
   });
 
-  if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  return NextResponse.json(product);
+  return NextResponse.json({ id: updated.id }); // <-- client needs this
 }
 
-// PATCH: Update product
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const data = await req.json();
-
-    const updated = await prisma.product.update({
-      where: { id: Number(params.id) },
-      data,
-    });
-
-    return NextResponse.json(updated);
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
-  }
-}
-
-// DELETE: Remove product
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  await prisma.product.delete({ where: { id: Number(params.id) } });
-  return NextResponse.json({ message: "Product deleted" });
+  const { id } = await params;
+  await prisma.product.delete({ where: { id: Number(id) } });
+  return NextResponse.json({ ok: true });
 }

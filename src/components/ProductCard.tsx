@@ -10,7 +10,7 @@ type Product = {
   id: number;
   name: string;
   price: number;
-  image: string;
+  imageUrl?: string; // ← new
 };
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -18,7 +18,14 @@ export default function ProductCard({ product }: { product: Product }) {
   const dispatch = useAppDispatch();
 
   const handleAddToCart = () => {
-    dispatch(addToCart({ id: product.id.toString(), name: product.name, price: product.price, image: product.image, quantity: 1 }));
+    dispatch(addToCart({
+      id: product.id.toString(),
+      name: product.name,
+      price: product.price,
+      image: product.imageUrl || "/placeholder.png",
+      quantity: 1
+    }));
+
     toast.success(`✅ ${product.name} به سبد خرید اضافه شد!`);
   };
 
@@ -31,7 +38,11 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Product Image */}
       <div className="relative w-full h-56 bg-gray-100 overflow-hidden">
         <Link href={`/products/${product.id}`}>
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
+          <img
+            src={product.imageUrl || "/placeholder.png"}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+          />
         </Link>
 
         {/* Hover Overlay */}

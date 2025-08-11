@@ -30,7 +30,7 @@ model Product {
   name        String
   description String
   price       Int
-  image       String
+  image       String?         // ⬅ legacy (optional now); we won’t use this going forward
   stock       Int
   categoryId  Int
   category    Category        @relation(fields: [categoryId], references: [id])
@@ -38,6 +38,8 @@ model Product {
   reviews     Review[]
   warranties  Warranty[]
   createdAt   DateTime        @default(now())
+
+  images      ProductImage[]  // ⬅ new relation
 }
 
 model ProductFilter {
@@ -87,4 +89,18 @@ model AdminUser {
   passwordHash String
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model ProductImage {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  data        Bytes    // stored as bytea in Postgres
+  contentType String
+  filename    String
+  size        Int
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([productId])
 }
