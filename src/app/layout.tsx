@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     <Navbar />
                     <main className="flex-grow">{children}</main>
                     <Footer />
-                    <Toaster richColors position="top-right" /> {/* ✅ Add this */}
+                    <Toaster richColors position="bottom-right" /> {/* ✅ Add this */}
                 </Providers>
             </body>
         </html>

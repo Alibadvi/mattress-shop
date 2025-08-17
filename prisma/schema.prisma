@@ -16,6 +16,7 @@ model User {
   orders     Order[]
   warranties Warranty[]
   reviews    Review[]
+  carts      Cart[] // 👈 add this back-ref
   createdAt  DateTime   @default(now())
 }
 
@@ -30,7 +31,7 @@ model Product {
   name        String
   description String
   price       Int
-  image       String?         // ⬅ legacy (optional now); we won’t use this going forward
+  image       String?
   stock       Int
   categoryId  Int
   category    Category        @relation(fields: [categoryId], references: [id])
@@ -39,7 +40,10 @@ model Product {
   warranties  Warranty[]
   createdAt   DateTime        @default(now())
 
-  images      ProductImage[]  // ⬅ new relation
+  images ProductImage[]
+
+  // ✅ add this back-relation so CartItem.product has an opposite
+  cartItems CartItem[]
 }
 
 model ProductFilter {
@@ -83,19 +87,19 @@ model Review {
 }
 
 model AdminUser {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
   name         String?
   passwordHash String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model ProductImage {
   id          Int      @id @default(autoincrement())
   productId   Int
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  data        Bytes    // stored as bytea in Postgres
+  data        Bytes // stored as bytea in Postgres
   contentType String
   filename    String
   size        Int
@@ -103,4 +107,33 @@ model ProductImage {
   createdAt   DateTime @default(now())
 
   @@index([productId])
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int?
+  user      User?      @relation(fields: [userId], references: [id])
+  sessionId String?    @unique
+  items     CartItem[]
+  status    String     @default("active")
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id     Int  @id @default(autoincrement())
+  cartId Int
+  cart   Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId Int
+  // ✅ keep this relation — it now has its opposite on Product
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity   Int @default(1)
+  priceAtAdd Int
+
+  @@unique([cartId, productId])
 }

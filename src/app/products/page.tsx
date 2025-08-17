@@ -1,49 +1,47 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import ProductCard from "@/components/ProductCard";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from 'react';
+import ProductCard from '@/components/ProductCard';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { loadProducts } from "@/store/slices/productsSlice";
-import { fetchCategories } from "@/lib/api/categories";
+} from '@/components/ui/accordion';
+import { useAppDispatch, useAppSelector } from '@/store/hooks'; // ✅ FIXED
+import { loadProducts } from '@/store/slices/productsSlice';
+import { fetchCategories } from '@/lib/api/categories';
 
 export default function ProductsPage() {
-  const dispatch = useAppDispatch();
-  const { list: products, loading } = useAppSelector((state) => state.products);
+  const dispatch = useAppDispatch();                   // ✅ FIXED
+  const { list: products, loading } = useAppSelector((s) => s.products); // ✅ FIXED
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [priceRange, setPriceRange] = useState([0, 30000000]);
-  const [category, setCategory] = useState("");
-  const [sort, setSort] = useState("latest");
+  const [category, setCategory] = useState('');
+  const [sort, setSort] = useState<'latest'|'price-low'|'price-high'>('latest');
   const [page, setPage] = useState(1);
   const [categories, setCategories] = useState<string[]>([]);
 
   const perPage = 8;
 
-  // ✅ Fetch products & categories on mount
   useEffect(() => {
     dispatch(loadProducts());
     fetchCategories().then((cats) => setCategories(cats.map((c: any) => c.name)));
   }, [dispatch]);
 
-  // ✅ Filtering logic
   const filteredProducts = useMemo(() => {
     return products
-      .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
-      .filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1])
-      .filter((p) => (category ? p.category.name === category : true))
-      .sort((a, b) => {
-        if (sort === "price-low") return a.price - b.price;
-        if (sort === "price-high") return b.price - a.price;
-        return 0; // latest already sorted from API
+      .filter((p: any) => p.name.toLowerCase().includes(search.toLowerCase()))
+      .filter((p: any) => p.price >= priceRange[0] && p.price <= priceRange[1])
+      .filter((p: any) => (category ? p.category.name === category : true))
+      .sort((a: any, b: any) => {
+        if (sort === 'price-low') return a.price - b.price;
+        if (sort === 'price-high') return b.price - a.price;
+        return 0;
       });
   }, [search, priceRange, category, sort, products]);
 
@@ -60,7 +58,7 @@ export default function ProductsPage() {
             <p className="text-center text-gray-500 py-10">در حال بارگذاری...</p>
           ) : paginatedProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {paginatedProducts.map((p) => (
+              {paginatedProducts.map((p: any) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
@@ -73,13 +71,13 @@ export default function ProductsPage() {
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
                 key={i}
-                variant={page === i + 1 ? "default" : "outline"}
+                variant={page === i + 1 ? 'default' : 'outline'}
                 onClick={() => setPage(i + 1)}
                 disabled={i + 1 > Math.ceil(filteredProducts.length / perPage)}
                 className={`w-10 h-10 rounded-full ${
                   i + 1 > Math.ceil(filteredProducts.length / perPage)
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
                 }`}
               >
                 {i + 1}
@@ -92,7 +90,6 @@ export default function ProductsPage() {
         <aside className="bg-gray-800 text-white rounded-xl shadow-xl p-4 border border-gray-700 h-fit sticky top-6">
           <h2 className="text-lg font-semibold mb-4 text-center">🔎 فیلترها</h2>
           <Accordion type="multiple" className="space-y-2">
-            {/* Search */}
             <AccordionItem value="search">
               <AccordionTrigger className="text-white text-md">جستجو</AccordionTrigger>
               <AccordionContent>
@@ -105,7 +102,6 @@ export default function ProductsPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Price */}
             <AccordionItem value="price">
               <AccordionTrigger className="text-white text-md">قیمت (تومان)</AccordionTrigger>
               <AccordionContent>
@@ -114,7 +110,7 @@ export default function ProductsPage() {
                   min={0}
                   max={30000000}
                   step={500000}
-                  onValueChange={(val) => setPriceRange(val)}
+                  onValueChange={(val) => setPriceRange(val as any)}
                   className="mt-2"
                 />
                 <div className="flex justify-between text-sm mt-2">
@@ -124,7 +120,6 @@ export default function ProductsPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Category */}
             <AccordionItem value="category">
               <AccordionTrigger className="text-white text-md">دسته‌بندی</AccordionTrigger>
               <AccordionContent>
@@ -132,9 +127,9 @@ export default function ProductsPage() {
                   <li>
                     <button
                       className={`w-full text-left px-2 py-1 rounded ${
-                        category === "" ? "bg-primary text-white" : "hover:bg-gray-700"
+                        category === '' ? 'bg-primary text-white' : 'hover:bg-gray-700'
                       }`}
-                      onClick={() => setCategory("")}
+                      onClick={() => setCategory('')}
                     >
                       همه
                     </button>
@@ -143,7 +138,7 @@ export default function ProductsPage() {
                     <li key={c}>
                       <button
                         className={`w-full text-left px-2 py-1 rounded ${
-                          category === c ? "bg-primary text-white" : "hover:bg-gray-700"
+                          category === c ? 'bg-primary text-white' : 'hover:bg-gray-700'
                         }`}
                         onClick={() => setCategory(c)}
                       >
@@ -155,7 +150,6 @@ export default function ProductsPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Sorting */}
             <AccordionItem value="sort">
               <AccordionTrigger className="text-white text-md">مرتب‌سازی</AccordionTrigger>
               <AccordionContent>
@@ -163,9 +157,9 @@ export default function ProductsPage() {
                   <li>
                     <button
                       className={`w-full text-left px-2 py-1 rounded ${
-                        sort === "latest" ? "bg-primary text-white" : "hover:bg-gray-700"
+                        sort === 'latest' ? 'bg-primary text-white' : 'hover:bg-gray-700'
                       }`}
-                      onClick={() => setSort("latest")}
+                      onClick={() => setSort('latest')}
                     >
                       جدیدترین
                     </button>
@@ -173,9 +167,9 @@ export default function ProductsPage() {
                   <li>
                     <button
                       className={`w-full text-left px-2 py-1 rounded ${
-                        sort === "price-low" ? "bg-primary text-white" : "hover:bg-gray-700"
+                        sort === 'price-low' ? 'bg-primary text-white' : 'hover:bg-gray-700'
                       }`}
-                      onClick={() => setSort("price-low")}
+                      onClick={() => setSort('price-low')}
                     >
                       ارزان‌ترین
                     </button>
@@ -183,9 +177,9 @@ export default function ProductsPage() {
                   <li>
                     <button
                       className={`w-full text-left px-2 py-1 rounded ${
-                        sort === "price-high" ? "bg-primary text-white" : "hover:bg-gray-700"
+                        sort === 'price-high' ? 'bg-primary text-white' : 'hover:bg-gray-700'
                       }`}
-                      onClick={() => setSort("price-high")}
+                      onClick={() => setSort('price-high')}
                     >
                       گران‌ترین
                     </button>

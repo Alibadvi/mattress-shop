@@ -1,32 +1,59 @@
 "use client";
+
 import { ShoppingCart, Eye } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useAppDispatch } from "@/store";
-import { addToCart } from "@/store/slices/cartSlice";
+import { useAppDispatch } from "@/store/hooks"; // ✅ client-safe hook
 import { toast } from "sonner";
+
+// Fallback local action (always exists)
+import { addToCart as addToCartLocal } from "@/store/slices/cartSlice";
 
 type Product = {
   id: number;
   name: string;
   price: number;
-  imageUrl?: string; // ← new
+  imageUrl?: string;
 };
 
 export default function ProductCard({ product }: { product: Product }) {
   const [hovered, setHovered] = useState(false);
   const dispatch = useAppDispatch();
 
-  const handleAddToCart = () => {
-    dispatch(addToCart({
-      id: product.id.toString(),
-      name: product.name,
-      price: product.price,
-      image: product.imageUrl || "/placeholder.png",
-      quantity: 1
-    }));
-
-    toast.success(`✅ ${product.name} به سبد خرید اضافه شد!`);
+  const handleAddToCart = async () => {
+    try {
+      // Try to use server-backed thunk if your slice exports it.
+      // We import it dynamically so the build won't break if it doesn't exist.
+      const mod = await import("@/store/slices/cartSlice");
+      if ("addToCartServer" in mod && typeof (mod as any).addToCartServer === "function") {
+        await dispatch((mod as any).addToCartServer({ productId: product.id, quantity: 1 }) as any);
+      } else {
+        // Fallback to local-only cart
+        dispatch(
+          addToCartLocal({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.imageUrl || "/placeholder.png",
+            quantity: 1,
+          })
+        );
+      }
+      toast.success(`✅ ${product.name} به سبد خرید اضافه شد!`);
+    } catch (e) {
+      // Final fallback if anything throws
+      dispatch(
+        addToCartLocal({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.imageUrl || "/placeholder.png",
+          quantity: 1,
+        })
+      );
+      toast.success(`✅ ${product.name} به سبد خرید اضافه شد!`);
+      if (process.env.NODE_ENV !== "production") console.error(e);
+    }
   };
 
   return (
@@ -62,8 +89,13 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.name}
           </h3>
         </Link>
-        <p className="text-primary font-bold text-lg mt-2">{product.price.toLocaleString()} تومان</p>
-        <button onClick={handleAddToCart} className="mt-4 flex items-center justify-center gap-2 bg-gray-400 text-white py-2 rounded-md hover:bg-gray-700 transition w-full">
+        <p className="text-primary font-bold text-lg mt-2">
+          {product.price.toLocaleString()} تومان
+        </p>
+        <button
+          onClick={handleAddToCart}
+          className="mt-4 flex items-center justify-center gap-2 bg-gray-400 text-white py-2 rounded-md hover:bg-gray-700 transition w-full"
+        >
           <ShoppingCart className="w-4 h-4" /> افزودن به سبد خرید
         </button>
       </div>
